@@ -41,36 +41,14 @@ function Get-Voters {
     $s.Content -match "`n.*csrf-token""\ content=""(?'token'.*)"".*`n" | Out-Null
     $authToken = $matches.token
 
-    $s = Invoke-WebRequest -uri "$base/elections/19" -method POST -websession $rse @commonParams -headers @{
-        "Referer" = "$base/elections/19/edit"
-        "Origin"  = $base
-    } -Form @{
-        "utf8"                          = "✓"
-        "_method"                       = "patch"
-        "authenticity_token"            = $authToken
-        "election[title]"               = "test"
-        "election[region_id]"           = $ID
-        "election[instructions]"        = ""
-        "election[warning]"             = ""
-        "election[allow_photos]"        = 0
-        "election[published]"           = 0
-        "election[active]"              = 0
-        "election[answers_editable]"    = 0
-        "election[candidacies_visible]" = 0
-        "commit"                        = "Zapisz wybory"
-    }
-
-    $s.Content -match "`n.*csrf-token""\ content=""(?'token'.*)"".*`n" | Out-Null
-    $authToken = $matches.token
-
-    $s = Invoke-WebRequest -uri "$base/elections/19/voters.csv" @commonParams -WebSession $rse
+    $s = Invoke-WebRequest -uri "$base/elections/$ID/voters.csv" @commonParams -WebSession $rse
 
     $utf8 = [System.Text.Encoding]::GetEncoding(65001)
     $iso88591 = [System.Text.Encoding]::GetEncoding(28591) #ISO 8859-1 ,Latin-1
 
-    $utf8.GetString([System.Text.Encoding]::Convert($utf8, $iso88591, $utf8.GetBytes($s.content))) | Out-File -path "$root\voters-$ID.csv" -NoNewline
+    $utf8.GetString([System.Text.Encoding]::Convert($utf8, $iso88591, $utf8.GetBytes($s.content))) | Out-File -path "$root\temp\voters-$ID.csv" -NoNewline
 
-    return "$root\voters-$ID.csv"
+    return "$root\temp\voters-$ID.csv"
 }
 
 $base = "https://zeus.int.partiarazem.pl"
@@ -108,9 +86,8 @@ if ($null -ne ($r.InputFields | where-Object value -eq "Logowanie")) {
 $output = @()
 foreach ($e in (import-csv "$root/zeus-input.csv" -delimiter ',' -encoding "UTF8")) {
     $r = Invoke-WebRequest -uri "$base/elections/new" -WebSession $session -method POST -Body @{
-        "trial"                  = "on"
         "election_module"        = "stv"
-        "name"                   = $e.Election
+        "name"                   = "$($e.Election)"
         "description"            = $e.Election
         "departments"            = "M`nK"
         "voting_starts_at_0"     = $e.Start

@@ -1,4 +1,4 @@
-#requires -Module Microsoft.PowerShell.GraphicalTools
+#Import-module Microsoft.PowerShell.GraphicalTools
 
 $commonParams = @{
     #"Proxy" = ""
@@ -38,13 +38,13 @@ foreach ($e in $in) {
     }
 }
 
-foreach ($e in $input) {
+foreach ($e in $in) {
     $r = Invoke-WebRequest -uri "$base/elections/$($e.election)/email-voters" -WebSession $session -method POST -Body @{
         "csrfmiddlewaretoken" = ($r.InputFields | Where-Object name -eq csrfmiddlewaretoken)[0].value
         "template"            = "vote"
         "voter_id"            = ""
         "email_subject"       = $e.name
-        "email_body"          = ""  
+        "email_body"          = ""
         "send_to"             = "all"
         "sms_body"            = ""
         "contact_method"      = "email"

@@ -1,4 +1,6 @@
+<#
 #requires -Module Microsoft.PowerShell.GraphicalTools
+#>
 
 $commonParams = @{
     #"Proxy" = ""

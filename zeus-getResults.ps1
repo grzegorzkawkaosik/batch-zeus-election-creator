@@ -1,5 +1,3 @@
-#requires -Module Microsoft.PowerShell.GraphicalTools
-
 $commonParams = @{
     #"Proxy" = ""
     #"ProxyUseDefaultCredential" = $true
@@ -44,11 +42,16 @@ foreach ($e in $in) {
     } -OutFile "$root\out\$($e.name -replace ' ', '-')-wynik.csv"
     $start = $false
     $end = $false
+    $karty = $false
+    $glos = 0
     get-content "$root\out\$($e.name -replace ' ', '-')-wynik.csv" | ForEach-Object {
         if ($_ -eq "Runda 1") {$end = $true}
         if ($start -and -not $end -and $_ -ne "") {write-output "- $_"}
         if ($_ -eq "Wybrano,Grupy") {$start = $true}
+        if ($_ -match "Głosujący,(\d{1,})") {$upr = $matches[1]}
+        if ($karty) {$glos++}
+        if ($_ -eq "Karty do głosowania") {$karty = $true}
     }
-    Write-Output "`nOdwołania można składać do $($(get-date).AddDays(7).ToShortDateString()).`n`n"
+    Write-Output "`nOdwołania można składać do $($(get-date).AddDays(7).ToShortDateString()).`n`nFrekwencja $glos / $upr, ~$([math]::Round(($glos/$upr)*100,1))%`n`n---`n"
     $i++
 }
