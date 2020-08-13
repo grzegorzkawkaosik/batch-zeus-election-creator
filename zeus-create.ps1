@@ -163,7 +163,7 @@ Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
     }
 }
 $elections = $elTemp
-<#
+
 foreach ($election in ($elections.Election | select-object -unique)) {
     $e = $elections | where-object election -eq $election | select-object -first 1
 
