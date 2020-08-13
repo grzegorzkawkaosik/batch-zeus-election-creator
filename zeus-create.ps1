@@ -102,27 +102,57 @@ foreach ($e in $elections) {
     $quotaK = $($k.count -ge $s)
     $quotaA = $($can.count -ge $e.seats)
 
+    if ($($elections | where-object { $_.election -eq $e.election }).count -gt 1) {
+        $electionName = "$($e.Election) $($e.poll)"
+    }
+    else {
+        $electionName = $e.Election
+    }
     if (-not ($quotaM -and $quotaK -and $quotaA)) {
-        #dowolny warunek niespełniony, odrzucamy wybory
-        $no++
-        Write-Output @"
-**$(get-date -Format "U-\K\KW-yyyy-MM-dd")-$no**
-$($e.Election) - $($e.Poll) nie odbędą się ze względu na niedostateczną liczbę kandydatur.
+
+        write-output @"
+Kandydatury kobiece: $($k.count)
+Kandydatury męskie: $($m.count)
+Ilość mandatów: $($e.seats)
+Maksymalna legalna liczba mandatów: $([Math]::Min($m.count, $k.count) * 2 + 1 )
+"@
+        $e.seats = read-host "podaj nową ilość mandatów (0 by anulować wybory): "
+
+        if ($e.seats -eq 0) {
+            #dowolny warunek niespełniony, odrzucamy wybory
+            $no++
+            Write-Output @"
+`n`n**$(get-date -Format "U-\K\KW-yyyy-MM-dd")-$no**
+$electionName nie odbędą się ze względu na niedostateczną liczbę kandydatur.
 
 Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
+`n---`n
 "@
+            continue
+        } else {
+            $no++
+            Write-Output @"
+`n`n**$(get-date -Format "U-\K\KW-yyyy-MM-dd")-$no**
+We zwględu na niedostateczną ilość zgłoszeń, na podstawie Art. 15 pkt. 12 Statutu Partii, Krajowa Komisja Wyborcza stwierdza, iż $electionName odbędą się z liczbąmandatów obniżoną do $($e.Seats).
+
+Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
+`n---`n
+"@
+        }
+
     }
-    elseif ($can.count -eq $e.seats) {
+    if ($can.count -eq $e.seats) {
         #tyle osób co miejsc, wyniki wyboró bez głosowania
         $no++
         write-output @"
 **$(get-date -Format "U-\K\KW-yyyy-MM-dd")-$no**
-Na podstawie Art 15 pkt 11 Statutu, Krajowa Komisja Wyborcza ogłasza że $($e.Election) odbywają się bez przeprowadzania głosowania ze względu na liczbę kandydatur równą liczbie miejsc do obsadzenia i spełniony parytet.
+Na podstawie Art. 15 pkt. 11 Statutu Partii, Krajowa Komisja Wyborcza ogłasza że $electionName odbywają się bez przeprowadzania głosowania ze względu na liczbę kandydatur równą liczbie miejsc do obsadzenia i spełniony parytet.
 Wybrane zostają następujące osoby:
 
 $($can | Sort-Object {Get-Random} | ForEach-Object {write-output "- $_`n"})
 
 Ze względu na brak głosowania, lista znajduje się w losowej kolejności.
+
 Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
 `n---`n
 "@
@@ -133,7 +163,7 @@ Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
     }
 }
 $elections = $elTemp
-
+<#
 foreach ($election in ($elections.Election | select-object -unique)) {
     $e = $elections | where-object election -eq $election | select-object -first 1
 
@@ -259,3 +289,4 @@ foreach ($election in ($elections.Election | select-object -unique)) {
     }
 }
 $output | export-csv -Path "$root\out\$(get-date -format "yyyyMMddTHHmmss")-output.csv" -NoTypeInformation -Encoding utf8NoBOM -Delimiter ','
+#>
