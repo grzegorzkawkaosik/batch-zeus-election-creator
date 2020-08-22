@@ -51,8 +51,8 @@ function Get-Voters {
     return "$root\temp\voters-$ID.csv"
 }
 
-#$base = "https://zeus.int.partiarazem.pl"
-$base = "https://zeus.gko.mj12.pl"
+$base = "https://zeus.int.partiarazem.pl"
+#$base = "https://zeus.gko.mj12.pl"
 $root = $PSScriptRoot
 
 try { $credentials = import-clixml "$root\$($base -replace "https://").cred" }
@@ -97,6 +97,7 @@ foreach ($e in $elections) {
     $can += $m
     $can += $k
     $s = [math]::floor(($e.seats / 2))
+    $maxLegalMandates = $([Math]::Min($([Math]::Min($m.count, $k.count) * 2 + 1 ), $can.count))
 
     $quotaM = $($m.count -ge $s)
     $quotaK = $($k.count -ge $s)
@@ -109,14 +110,16 @@ foreach ($e in $elections) {
         $electionName = $e.Election
     }
     if (-not ($quotaM -and $quotaK -and $quotaA)) {
+        if ($maxLegalMandates -gt 0) {
 
-        write-output @"
+            write-output @"
 Kandydatury kobiece: $($k.count)
 Kandydatury męskie: $($m.count)
 Ilość mandatów: $($e.seats)
-Maksymalna legalna liczba mandatów: $([Math]::Min($m.count, $k.count) * 2 + 1 )
+Maksymalna legalna liczba mandatów: $maxLegalMandates
 "@
-        $e.seats = read-host "podaj nową ilość mandatów (0 by anulować wybory): "
+        }
+            $e.seats = read-host "podaj nową ilość mandatów (0 by anulować wybory): "
 
         if ($e.seats -eq 0) {
             #dowolny warunek niespełniony, odrzucamy wybory
@@ -129,7 +132,8 @@ Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
 `n---`n
 "@
             continue
-        } else {
+        }
+        else {
             $no++
             Write-Output @"
 `n`n**$(get-date -Format "U-\K\KW-yyyy-MM-dd")-$no**
@@ -142,7 +146,7 @@ Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
 
     }
     if ($can.count -eq $e.seats) {
-        #tyle osób co miejsc, wyniki wyboró bez głosowania
+        #tyle osób co miejsc, wyniki wyborów bez głosowania
         $no++
         write-output @"
 **$(get-date -Format "U-\K\KW-yyyy-MM-dd")-$no**
@@ -163,7 +167,7 @@ Odwołania można składać do $($(get-date).AddDays(8).ToShortDateString()).
     }
 }
 $elections = $elTemp
-
+#<#
 foreach ($election in ($elections.Election | select-object -unique)) {
     $e = $elections | where-object election -eq $election | select-object -first 1
 

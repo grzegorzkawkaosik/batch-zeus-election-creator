@@ -10,7 +10,7 @@ $commonParams = @{
 $base = "https://zeus.int.partiarazem.pl"
 $root = $PSScriptRoot
 
-try { $credentials = import-clixml $root/zeus.cred }
+try { $credentials = import-clixml "$root\$($base -replace "https://").cred" }
 catch {
     $credentials = get-credential -Message "Zeus login"
     if ($Host.UI.PromptForChoice("Security", "Do you want to save credentials?", @("No", "Yes"), 0)) {
