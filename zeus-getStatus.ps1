@@ -10,7 +10,7 @@ try { $credentials = import-clixml "$root\$($base -replace "https://").cred" }
 catch {
     $credentials = get-credential -Message "Zeus login"
     if ($Host.UI.PromptForChoice("Security", "Do you want to save credentials?", @("No", "Yes"), 0)) {
-        $credentials | Export-Clixml $root/zeus.cred
+        $credentials | Export-Clixml "$root\$($base -replace "https://").cred"
     }
 }
 

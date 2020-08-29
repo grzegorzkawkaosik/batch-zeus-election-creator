@@ -14,7 +14,7 @@ try { $credentials = import-clixml "$root\$($base -replace "https://").cred" }
 catch {
     $credentials = get-credential -Message "Zeus login"
     if ($Host.UI.PromptForChoice("Security", "Do you want to save credentials?", @("No", "Yes"), 0)) {
-        $credentials | Export-Clixml $root/zeus.cred
+        $credentials | Export-Clixml "$root\$($base -replace "https://").cred"
     }
 }
 
@@ -31,11 +31,11 @@ $r = Invoke-WebRequest -uri "$base/auth/auth/login" -WebSession $session -method
     "Origin"  = $base
 }
 $in = $(import-csv (Get-ChildItem "$root\out" -Filter "*.csv" | Select-Object name, fullname | Sort-Object -Property name -Descending | Out-GridView -PassThru).fullname -delimiter ',' -encoding "UTF8")
-foreach ($e in $in) {
-    $r = Invoke-WebRequest -uri "$base/elections/$($e.election)/close" -WebSession $session -method POST -Body @{
+foreach ($e in $($in.election | Select-Object -unique)) {
+    $r = Invoke-WebRequest -uri "$base/elections/$e/close" -WebSession $session -method POST -Body @{
         "csrfmiddlewaretoken" = ($r.InputFields | Where-Object name -eq csrfmiddlewaretoken)[0].value
     } -Headers @{
-        "Referer" = "$base/elections/$($e.election)"
+        "Referer" = "$base/elections/$e"
         "Origin"  = $base
     }
 }
